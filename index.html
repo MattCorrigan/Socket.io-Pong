@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+</head>
+
+<body>
+
+    <style>
+    
+        html, body {
+            margin:0;
+            padding:0;
+            background-color:black;
+            overflow-x:hidden;
+            max-height:100vh;
+            min-height:100vh;
+        }
+        
+        .player1, .player2, .ball {
+            background-color:white;
+            display:block;
+            width:50px;
+            height:300px;
+            position:absolute;
+        }
+        
+        .p1-score, .p2-score, .p1-name, .p2-name {
+            color:white;
+            position:absolute;
+            top:830px;
+            font-size:30px;
+        }
+        
+        .p1-name, .p2-name {
+            top:800px;
+        }
+        
+        .p1-score, .p1-name {
+            left:220px;
+        }
+        
+        .p2-score, .p2-name {
+            left:1120px;
+        }
+        
+        .player1 {
+            left:200px;
+            top:50px;
+        }
+        
+        .player2 {
+            left:1100px;
+            top:50px;
+        }
+        
+        .ball {
+            width:25px;
+            height:25px;
+            top:400px;
+            left:500px;
+            position:absolute;
+        }
+        
+        .start-box {
+            display:inline-block;
+            position:fixed;
+            left:40%;
+            top:40%;
+        }
+        
+        input {
+            color:white;
+            padding:15px;
+            border:1px solid white;
+            font-family:"Trebuchet MS", sans-serif;
+            background-color:black;
+        }
+
+        #lobby {
+            color:white;
+            font-family:"Trebuchet MS", sans-serif;
+        }
+        
+        h1 {
+            color:white;
+            font-family:"Trebuchet MS";
+            margin-top:200px;
+            text-align:center;
+        }
+        
+        .container {
+            margin:0 auto;
+            height:800px;
+            width:1350px;
+            border:1px solid white;
+            position:relative;
+        }
+        
+    </style>
+    
+    <div id="lobby">
+        <h2>In Lobby, Waiting for Opponent</h2>
+    </div>
+    
+    <div class="container">
+        <div class="player1"></div>
+        <div class="player2"></div>
+        <div class="ball"></div>
+        <p class="p1-name">Bob</p>
+        <p class="p2-name">Bob</p>
+        <p class="p1-score">0</p>
+        <p class="p2-score">0</p>
+    </div>
+    
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+    $("#lobby").hide();
+    
+    var start = function() {
+        
+        var name = $("#name").val();
+        $(".start-box").remove();
+        $("#lobby").show();
+        
+        game_started = false;
+        
+        var socket = io();
+    
+        var w_down = false;
+        var s_down = false;
+        
+        var p1_score = 0;
+        var p2_score = 0;
+    
+        $(document).keypress(function(event) {
+            if (event.which === 119) {
+                // w
+                w_down = true;
+            } else if (event.which === 115) {
+                // s
+                s_down = true;
+            }
+        });
+    
+        $(document).keyup(function(event) {
+            if (event.which === 87) {
+                // w
+                w_down = false;
+            
+            } else if (event.which === 83) {
+                // s
+                s_down = false;
+            }
+        });
+    
+        var move = function() {
+            if (w_down) {
+               socket.emit("move", "up");
+            } else if (s_down) {
+               socket.emit("move", "down");
+            }
+        }
+    
+        setInterval(move, 10);
+        
+        socket.on("p1-name", function(val) {
+            $(".p1-name").text(val);
+            console.log("player1 is named " + val);
+        });
+        
+        socket.on("p2-name", function(val) {
+            $(".p2-name").text(val);
+            console.log("player2 is named " + val);
+        });
+    
+        socket.on("update player1", function(val) {
+            $(".player1").css("top", val + "px");
+        });
+    
+        socket.on("update player2", function(val) {
+            $(".player2").css("top", val + "px");
+        });
+    
+        socket.on("update ball", function(val) {
+            
+            if (!game_started) {
+                game_started = true;
+                $("#lobby").hide();
+                
+                socket.emit("name", name);
+            }
+            
+            x = val.split(" ")[0];
+            y = val.split(" ")[1];
+        
+            var margin_offset = parseInt($(".container").css("marginLeft").replace('px', ''));
+            
+            $(".ball").css("left", x + "px");
+            $(".ball").css("top", y + "px");
+        });
+
+        socket.on("win", function(val) {
+            $("body").html("<h1>You Win " + val + "!</h1><button onclick='location.href=location.href'>New Game</button>");
+        });
+        
+        socket.on("lose", function(val) {
+            $("body").html("<h1>You Lose " + val + "...</h1><button onclick='location.href=location.href'>New Game</button>");
+        });
+        
+        socket.on("end", function(val) {
+            // opponent left
+            $("body").html("<h1>Opponent Left, You WIN!!!</h1><button onclick='location.href=location.href'>New Game</button>");
+        });
+        
+        socket.on("player1-score", function() {
+            p1_score++;
+            $(".p1-score").text(p1_score);
+        });
+        
+        socket.on("player2-score", function() {
+            p2_score++;
+            $(".p2-score").text(p2_score);
+        });
+        
+    };
+</script>
+    
+    <div class="start-box">
+        <input type="text" value="" id="name" placeholder="Name...">
+        <input type="submit" val="Enter" onclick="start();">
+    </div>
+</body>
+
+</html>

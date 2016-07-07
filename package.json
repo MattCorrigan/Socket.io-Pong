@@ -1,0 +1,6 @@
+{
+  "name": "multiplayer-pong",
+  "version": "0.0.1",
+  "description": "Simple Multiplayer Pong Game",
+  "dependencies": {}
+}
