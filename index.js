@@ -210,6 +210,6 @@ var update_games = function() {
 setInterval(update_games, 10);
 
 
-http.listen(3000, function(){
-  console.log('listening on localhost:3000');
+http.listen(process.env.PORT || 3000, function(){
+  console.log('listening...');
 });
